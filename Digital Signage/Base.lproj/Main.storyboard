@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="15E27e" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="11201" systemVersion="16B2555" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11201"/>
     </dependencies>
     <scenes>
         <!--Application-->
@@ -95,7 +95,7 @@
                                     <items>
                                         <menuItem title="Change URL" keyEquivalent="l" id="ErB-Jt-A5i">
                                             <connections>
-                                                <action selector="changeUrl:" target="Voe-Tx-rLC" id="f4g-0U-mTz"/>
+                                                <action selector="changeUrl:" target="Voe-Tx-rLC" id="z3a-jc-v9u"/>
                                             </connections>
                                         </menuItem>
                                     </items>
@@ -187,7 +187,7 @@
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="goButtonAction:" target="XfG-lQ-9wD" id="EbQ-hB-p8E"/>
+                                    <action selector="goButtonAction:" target="XfG-lQ-9wD" id="Tre-4P-TPZ"/>
                                 </connections>
                             </button>
                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="44W-9k-BEm">
@@ -201,7 +201,7 @@
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="addressBoxAction:" target="XfG-lQ-9wD" id="apb-By-egH"/>
+                                    <action selector="addressBoxAction:" target="XfG-lQ-9wD" id="B3o-oQ-S6u"/>
                                 </connections>
                             </textField>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uMe-xy-dTN">

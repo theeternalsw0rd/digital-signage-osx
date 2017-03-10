@@ -16,20 +16,20 @@ class MyImageView: NSImageView {
         let destSize = NSMakeSize(w, h)
         let newImage = NSImage(size: destSize)
         newImage.lockFocus()
-        image.drawInRect(NSMakeRect(0, 0, destSize.width, destSize.height), fromRect: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.CompositeSourceOver, fraction: CGFloat(1))
+        image.draw(in: NSMakeRect(0, 0, destSize.width, destSize.height), from: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.sourceOver, fraction: CGFloat(1))
         newImage.unlockFocus()
         newImage.size = destSize
-        self.image = NSImage(data: newImage.TIFFRepresentation!)!
+        self.image = NSImage(data: newImage.tiffRepresentation!)!
     }
 
-    override func drawRect(dirtyRect: NSRect) {
-        super.drawRect(dirtyRect)
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
 
         // Drawing code here.
     }
     
-    override func mouseMoved(theEvent: NSEvent) {
-        super.mouseMoved(theEvent)
+    override func mouseMoved(with theEvent: NSEvent) {
+        super.mouseMoved(with: theEvent)
     }
     
     override func updateTrackingAreas() {
@@ -38,7 +38,7 @@ class MyImageView: NSImageView {
                 removeTrackingArea(trackingArea)
             }
         }
-        let options = NSTrackingAreaOptions.ActiveAlways.exclusiveOr(NSTrackingAreaOptions.MouseMoved)
+        let options = NSTrackingAreaOptions.activeAlways.symmetricDifference(NSTrackingAreaOptions.mouseMoved)
         let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
         self.addTrackingArea(trackingArea)
     }

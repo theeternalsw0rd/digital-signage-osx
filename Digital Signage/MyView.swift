@@ -11,11 +11,11 @@
 import Cocoa
 
 class MyView: NSView {
-    private var mouseTimer = NSTimer()
+    private var mouseTimer = Timer()
     var trackMouse = false
     
-    override func drawRect(dirtyRect: NSRect) {
-        super.drawRect(dirtyRect)
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
 
         // Drawing code here.
     }
@@ -25,14 +25,14 @@ class MyView: NSView {
     }
     
     func setTimeout() {
-        dispatch_async(dispatch_get_main_queue(),{
+        DispatchQueue.main.async(execute: {
             self.mouseTimer.invalidate()
-            self.mouseTimer = NSTimer(timeInterval: 5, target: self, selector: "hideCursor", userInfo: nil, repeats: false)
-            NSRunLoop.currentRunLoop().addTimer(self.mouseTimer, forMode: NSRunLoopCommonModes)
+            self.mouseTimer = Timer(timeInterval: 5, target: self, selector: #selector(MyView.hideCursor), userInfo: nil, repeats: false)
+            RunLoop.current.add(self.mouseTimer, forMode: RunLoopMode.commonModes)
         })
     }
     
-    override func mouseMoved(theEvent: NSEvent) {
+    override func mouseMoved(with theEvent: NSEvent) {
         if(!self.trackMouse) {
             return
         }

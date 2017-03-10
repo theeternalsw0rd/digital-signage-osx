@@ -13,7 +13,7 @@ import AppKit
 import FileKit
 import Alamofire
 
-class Downloader: NSOperation {
+class Downloader: Operation {
     let item: SlideshowItem
     
     init(item: SlideshowItem) {
@@ -22,15 +22,14 @@ class Downloader: NSOperation {
     }
     
     override func main() {
-        let destination: (NSURL, NSHTTPURLResponse) -> (NSURL) = {
-            (temporaryURL, response) in
-            let destinationURL = NSURL(fileURLWithPath: self.item.path.rawValue, isDirectory: false)
-            return destinationURL
+        let destination: DownloadRequest.DownloadFileDestination = { _, _ in
+            let destinationURL = URL(fileURLWithPath: self.item.path.rawValue, isDirectory: false)
+            return (destinationURL, [.removePreviousFile, .createIntermediateDirectories])
         }
-        Alamofire.download(Alamofire.Method.GET, self.item.url.absoluteString, destination: destination)
-        .response { _, _, _, error in
-            if let error = error {
-                NSLog("Failed with error: %@", error)
+        Alamofire.download(self.item.url, to: destination)
+        .response { response in
+            if let error = response.error {
+                NSLog("Failed with error: %@", error.localizedDescription)
                 self.item.status = -1
             } else {
                 self.item.status = 1

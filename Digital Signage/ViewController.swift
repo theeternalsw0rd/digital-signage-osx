@@ -15,36 +15,36 @@ import AVFoundation
 import SwiftyJSON
 
 class ViewController: NSViewController {
-    private var url = NSURL()
+    private var url = NSURL(fileURLWithPath: "")
     private var slideshow : [SlideshowItem] = []
     private var slideshowLoader : [SlideshowItem] = []
     private var countdowns : [Countdown] = []
     private var slideshowLength = 0
     private var currentSlideIndex = -1
-    private var timer = NSTimer()
-    private var updateTimer = NSTimer()
-    private var countdownTimer = NSTimer()
+    private var timer = Timer()
+    private var updateTimer = Timer()
+    private var countdownTimer = Timer()
     private var updateReady = false
     private var initializing = true
     private var animating = false
-    private var applicationSupport = Path.UserApplicationSupport + "/theeternalsw0rd/Digital Signage"
-    private let appDelegate = NSApplication.sharedApplication().delegate as! AppDelegate
-    private let downloadQueue = NSOperationQueue()
+    private var applicationSupport = Path.userApplicationSupport + "/theeternalsw0rd/Digital Signage"
+    private let appDelegate = NSApplication.shared().delegate as! AppDelegate
+    private let downloadQueue = OperationQueue()
     
     @IBOutlet weak var countdown: NSTextField!
     @IBOutlet weak var goButton: NSButton!
     @IBOutlet weak var addressBox: NSTextField!
     @IBOutlet weak var label: NSTextField!
-    @IBAction func goButtonAction(sender: AnyObject) {
+    @IBAction func goButtonAction(_ sender: AnyObject) {
         let urlString = self.addressBox.stringValue
-        NSUserDefaults.standardUserDefaults().setObject(urlString, forKey: "url")
-        self.loadSignage(urlString)
+        UserDefaults.standard.set(urlString, forKey: "url")
+        self.loadSignage(urlString: urlString)
     }
     
-    @IBAction func addressBoxAction(sender: AnyObject) {
+    @IBAction func addressBoxAction(_ sender: AnyObject) {
         let urlString = self.addressBox.stringValue
-        NSUserDefaults.standardUserDefaults().setObject(urlString, forKey: "url")
-        self.loadSignage(urlString)
+        UserDefaults.standard.set(urlString, forKey: "url")
+        self.loadSignage(urlString: urlString)
     }
     
     func resetView() {
@@ -56,17 +56,17 @@ class ViewController: NSViewController {
             self.stopSlideshow()
             self.stopUpdater()
             self.stopCountdowns()
-            self.countdown.hidden = true
-            let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url")
+            self.countdown.isHidden = true
+            let urlString = UserDefaults.standard.string(forKey: "url")
             self.initializing = true
-            self.releaseOtherViews(nil)
-            self.label.hidden = false
-            self.addressBox.hidden = false
+            self.releaseOtherViews(imageView: nil)
+            self.label.isHidden = false
+            self.addressBox.isHidden = false
             if(urlString != nil) {
                 self.addressBox.stringValue = urlString!
             }
             self.addressBox.becomeFirstResponder()
-            self.goButton.hidden = false
+            self.goButton.isHidden = false
             self.view.needsLayout = true
         })
     }
@@ -80,7 +80,7 @@ class ViewController: NSViewController {
             catch {
                 let alert = NSAlert()
                 alert.messageText = "Could not create caching directory."
-                alert.addButtonWithTitle("OK")
+                alert.addButton(withTitle: "OK")
                 let _ = alert.runModal()
                 return
             }
@@ -93,19 +93,19 @@ class ViewController: NSViewController {
         else {
             let alert = NSAlert()
             alert.messageText = "URL appears to be malformed."
-            alert.addButtonWithTitle("OK")
+            alert.addButton(withTitle: "OK")
             let _ = alert.runModal()
         }
     }
     
-    func backgroundUpdate(timer:NSTimer) {
+    func backgroundUpdate(timer:Timer) {
         self.showNextSlide()
     }
     
     private func releaseOtherViews(imageView: NSView?) {
         for view in self.view.subviews {
             // hide views that need to retain properties
-            if(view != imageView && view != self.countdown && !(view.hidden)) {
+            if(view != imageView && view != self.countdown && !(view.isHidden)) {
                 view.removeFromSuperview()
             }
         }
@@ -116,34 +116,34 @@ class ViewController: NSViewController {
         videoView.frame.size = frameSize
         videoView.bounds.size = boundsSize
         videoView.wantsLayer = true
-        videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
-        let player = AVPlayer(URL: uri)
+        videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
+        let player = AVPlayer(url: uri as URL)
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.videoGravity = AVLayerVideoGravityResize
         videoView.layer = playerLayer
-        videoView.layer?.backgroundColor = CGColorCreateGenericRGB(0, 0, 0, 0)
-        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "playerDidFinishPlaying:", name: AVPlayerItemDidPlayToEndTimeNotification, object: player.currentItem)
+        videoView.layer?.backgroundColor = CGColor(red: 0, green: 0, blue: 0, alpha: 0)
+        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
         player.play()
     }
     
     private func createImageView(image: NSImage, thumbnail: Bool, frameSize: NSSize, boundsSize: NSSize) {
         let imageView = MyImageView()
         imageView.removeConstraints(imageView.constraints)
-        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.translatesAutoresizingMaskIntoConstraints = true
         imageView.alphaValue = 0
         if(thumbnail) {
             imageView.image = image
         }
         else {
-            imageView.imageWithSize(image, w: frameSize.width, h: frameSize.height)
+            imageView.imageWithSize(image: image, w: frameSize.width, h: frameSize.height)
         }
         imageView.frame.size = frameSize
         imageView.bounds.size = boundsSize
         imageView.wantsLayer = true
-        imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.OnSetNeedsDisplay
-        dispatch_async(dispatch_get_main_queue(), { () -> Void in
-            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.Below, relativeTo: self.countdown)
+        imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
+        DispatchQueue.main.async(execute: { () -> Void in
+            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
             self.animating = true
             NSAnimationContext.runAnimationGroup(
                 { (context) -> Void in
@@ -151,12 +151,12 @@ class ViewController: NSViewController {
                     imageView.animator().alphaValue = 1.0
                     
                 }, completionHandler: { () -> Void in
-                    self.releaseOtherViews(imageView)
+                    self.releaseOtherViews(imageView: imageView)
                     if(thumbnail) {
                         let item = self.slideshow[self.currentSlideIndex]
                         let path = item.path.rawValue
                         let uri = NSURL(fileURLWithPath: path)
-                        self.playVideo(frameSize, boundsSize: boundsSize, uri: uri)
+                        self.playVideo(frameSize: frameSize, boundsSize: boundsSize, uri: uri)
                     }
                     else {
                         self.setTimer()
@@ -168,8 +168,8 @@ class ViewController: NSViewController {
     }
     
     private func showNextSlide() {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), { () -> Void in
-            self.currentSlideIndex++
+        DispatchQueue.global(qos: .background).async(execute: { () -> Void in
+            self.currentSlideIndex += 1
             if(self.currentSlideIndex == self.slideshowLength) {
                 if(self.updateReady) {
                     self.updateSlideshow()
@@ -185,20 +185,20 @@ class ViewController: NSViewController {
             let boundsSize = self.view.bounds.size
             if(type == "image") {
                 let image = NSImage(contentsOfFile: path)
-                self.createImageView(image!, thumbnail: false, frameSize: frameSize, boundsSize: boundsSize)
+                self.createImageView(image: image!, thumbnail: false, frameSize: frameSize, boundsSize: boundsSize)
             }
             else if(type == "video") {
                 let uri = NSURL(fileURLWithPath: path)
-                let avAsset = AVURLAsset(URL: uri)
+                let avAsset = AVURLAsset(url: uri as URL)
                 let avAssetImageGenerator = AVAssetImageGenerator(asset: avAsset)
-                let time = NSValue(CMTime: CMTimeMake(0, 1))
-                avAssetImageGenerator.generateCGImagesAsynchronouslyForTimes([time],
-                    completionHandler: {(_, image:CGImage?, _, _, error:NSError?) in
+                let time = NSValue(time: CMTimeMake(0, 1))
+                avAssetImageGenerator.generateCGImagesAsynchronously(forTimes: [time],
+                    completionHandler: {(_, image:CGImage?, _, _, error:Error?) in
                         if(error == nil) {
-                            self.createImageView(NSImage(CGImage: image!, size: frameSize), thumbnail: true, frameSize: frameSize, boundsSize: boundsSize)
+                            self.createImageView(image: NSImage(cgImage: image!, size: frameSize), thumbnail: true, frameSize: frameSize, boundsSize: boundsSize)
                         }
                         else {
-                            self.playVideo(frameSize, boundsSize: boundsSize, uri: uri)
+                            self.playVideo(frameSize: frameSize, boundsSize: boundsSize, uri: uri)
                         }
                     }
                 )
@@ -211,47 +211,47 @@ class ViewController: NSViewController {
     
     func playerDidFinishPlaying(note: NSNotification) {
         self.showNextSlide()
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
     private func stopSlideshow() {
-        dispatch_async(dispatch_get_main_queue(),{
+        DispatchQueue.main.async(execute: {
             self.timer.invalidate()
         })
     }
     
     private func stopUpdater() {
-        dispatch_async(dispatch_get_main_queue(),{
+        DispatchQueue.main.async(execute: {
             self.updateTimer.invalidate()
         })
     }
     
     private func stopCountdowns() {
-        dispatch_async(dispatch_get_main_queue(),{
+        DispatchQueue.main.async(execute: {
             self.countdownTimer.invalidate()
         })
     }
     
     private func setCountdowns() {
-        dispatch_async(dispatch_get_main_queue(),{
+        DispatchQueue.main.async(execute: {
             self.countdownTimer.invalidate()
-            self.countdownTimer = NSTimer(timeInterval: 0.1, target: self, selector: "updateCountdowns", userInfo: nil, repeats: true)
-            NSRunLoop.currentRunLoop().addTimer(self.countdownTimer, forMode: NSRunLoopCommonModes)
+            self.countdownTimer = Timer(timeInterval: 0.1, target: self, selector: #selector(self.updateCountdowns), userInfo: nil, repeats: true)
+            RunLoop.current.add(self.countdownTimer, forMode: RunLoopMode.commonModes)
         })
     }
     
     private func setUpdateTimer() {
-        dispatch_async(dispatch_get_main_queue(),{
+        DispatchQueue.main.async(execute: {
             self.updateTimer.invalidate()
-            self.updateTimer = NSTimer(timeInterval: 30, target: self, selector: "update", userInfo: nil, repeats: false)
-            NSRunLoop.currentRunLoop().addTimer(self.updateTimer, forMode: NSRunLoopCommonModes)
+            self.updateTimer = Timer(timeInterval: 30, target: self, selector: #selector(self.update), userInfo: nil, repeats: false)
+            RunLoop.current.add(self.updateTimer, forMode: RunLoopMode.commonModes)
         })
     }
     
     private func setTimer() {
-        dispatch_async(dispatch_get_main_queue(),{
-            self.timer = NSTimer(timeInterval: 5.0, target: self, selector: "backgroundUpdate:", userInfo: nil, repeats: false)
-            NSRunLoop.currentRunLoop().addTimer(self.timer, forMode: NSRunLoopCommonModes)
+        DispatchQueue.main.async(execute: {
+            self.timer = Timer(timeInterval: 5.0, target: self, selector: #selector(self.backgroundUpdate), userInfo: nil, repeats: false)
+            RunLoop.current.add(self.timer, forMode: RunLoopMode.commonModes)
         })
     }
     
@@ -263,15 +263,15 @@ class ViewController: NSViewController {
         if(self.downloadQueue.operationCount > 0) {
             return
         }
-        self.downloadQueue.suspended = true
+        self.downloadQueue.isSuspended = true
         for item in self.slideshowLoader {
             if(Path(stringInterpolation: item.path).exists) {
                 if(item.status == 1) {
                     continue
                 }
-                let fileManager = NSFileManager.defaultManager()
+                let fileManager = FileManager.default
                 do {
-                    try fileManager.removeItemAtPath(item.path.rawValue)
+                    try fileManager.removeItem(atPath: item.path.rawValue)
                 } catch {
                     NSLog("Could not remove existing file: %@", item.path.rawValue)
                     continue
@@ -285,19 +285,19 @@ class ViewController: NSViewController {
             }
         }
         self.appDelegate.backgroundThread(background: {
-            self.downloadQueue.suspended = false
+            self.downloadQueue.isSuspended = false
             while(self.downloadQueue.operationCount > 0) {
                 usleep(100000)
             }
         }, completion: {
             if(self.initializing) {
                 self.initializing = false
-                self.goButton.hidden = true
+                self.goButton.isHidden = true
                 self.addressBox.resignFirstResponder()
-                self.addressBox.hidden = true
-                self.label.hidden = true
+                self.addressBox.isHidden = true
+                self.label.isHidden = true
                 self.view.becomeFirstResponder()
-                if(!((self.view.window?.styleMask)! & NSFullScreenWindowMask == NSFullScreenWindowMask)) {
+                if(!(self.view.window?.styleMask)!.contains(NSWindowStyleMask.fullScreen)) {
                     self.view.window?.toggleFullScreen(nil)
                 }
                 let view = self.view as! MyView
@@ -332,9 +332,9 @@ class ViewController: NSViewController {
                         }
                     }
                     if(remove) {
-                        let fileManager = NSFileManager.defaultManager()
+                        let fileManager = FileManager.default
                         do {
-                            try fileManager.removeItemAtPath(file.rawValue)
+                            try fileManager.removeItem(atPath: file.rawValue)
                         } catch {
                             NSLog("Could not remove existing file: %@", file.rawValue)
                             continue
@@ -349,18 +349,21 @@ class ViewController: NSViewController {
     }
     
     func getDayOfWeek(date: NSDate)->Int? {
-        let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)
-        let myComponents = myCalendar?.components(NSCalendarUnit.Weekday, fromDate: date)
+        let myCalendar = NSCalendar(calendarIdentifier: NSCalendar.Identifier.gregorian)
+        let myComponents = myCalendar?.components(NSCalendar.Unit.weekday, from: date as Date)
         let weekDay = myComponents?.weekday
         return weekDay
     }
     
     func updateCountdowns() {
         let date = NSDate()
-        let currentDay = getDayOfWeek(date)
-        let calendar = NSCalendar.currentCalendar()
-        let components = calendar.components([NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: date)
-        let seconds = components.hour * 3600 + components.minute * 60 + components.second
+        let currentDay = getDayOfWeek(date: date)
+        let calendar = NSCalendar.current
+        let components = calendar.dateComponents([.hour, .minute, .second], from: date as Date)
+        let hour = components.hour ?? 0
+        let minute = components.minute ?? 0
+        let second = components.second ?? 0
+        let seconds = hour * 3600 + minute * 60 + second
         var hide = true
         for countdown in self.countdowns {
             if(countdown.day != currentDay || countdown.duration > countdown.minute + countdown.hour * 60) {
@@ -390,7 +393,7 @@ class ViewController: NSViewController {
                 break
             }
         }
-        self.countdown.hidden = hide
+        self.countdown.isHidden = hide
     }
     
     func update() {
@@ -417,61 +420,70 @@ class ViewController: NSViewController {
         }
         let jsonLocation = self.applicationSupport + "/json.txt"
         let userAgent = "Digital Signage"
-        let request = NSMutableURLRequest(URL: self.url)
+        let request = NSMutableURLRequest(url: self.url as URL)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let session = NSURLSession.sharedSession()
-        let task = session.dataTaskWithRequest(request) { (data, response, error) -> Void in
+        let session = URLSession.shared
+        let task = session.dataTask(with: request as URLRequest) { (data, response, error) -> Void in
             if error == nil {
-                let dumpData = data
-                var cachedJSON = JSON(data: dumpData!)
-                if let cachedData = NSData(contentsOfFile: String(jsonLocation)) {
-                    cachedJSON = JSON(data: cachedData)
-                    if(dumpData!.isEqualToData(cachedData) && !self.initializing) {
-                        self.setUpdateTimer()
-                        NSLog("No changes")
-                        return
+                if let dumpData = data {
+                    let dumpNSData = NSData(data: dumpData)
+                    var cachedJSON = JSON(data: dumpData)
+                    if let cachedData = NSData(contentsOfFile: String(describing: jsonLocation)) {
+                    cachedJSON = JSON(data: cachedData as Data)
+                        if(dumpNSData.isEqual(to: cachedData) && !self.initializing) {
+                            self.setUpdateTimer()
+                            NSLog("No changes")
+                            return
+                        }
+                        if (!(dumpNSData.write(toFile: jsonLocation.rawValue, atomically: true))) {
+                            NSLog("Unable to write to file %@", jsonLocation.rawValue)
+                        }
                     }
-                    if (!(dumpData!.writeToFile(jsonLocation.rawValue, atomically: true))) {
-                        NSLog("Unable to write to file %@", jsonLocation.rawValue)
+                    else {
+                        if (!(dumpNSData.write(toFile: jsonLocation.rawValue, atomically: true))) {
+                            NSLog("Unable to write to file %@", jsonLocation.rawValue)
+                        }
                     }
-                }
-                else {
-                    if (!(dumpData!.writeToFile(jsonLocation.rawValue, atomically: true))) {
-                        NSLog("Unable to write to file %@", jsonLocation.rawValue)
+                    let json = JSON(data: dumpData)
+                    if let countdowns = json["countdowns"].array {
+                        self.generateCountdowns(countdowns: countdowns)
                     }
-                }
-                let json = JSON(data: dumpData!)
-                if let countdowns = json["countdowns"].array {
-                    self.generateCountdowns(countdowns)
-                }
-                if let items = json["items"].array {
-                    let cachedItems = cachedJSON["items"].array
-                    if(items.count > 0) {
-                        self.slideshowLoader.removeAll()
-                        for item in items {
-                            if let itemUrl = item["url"].string {
-                                if let itemNSURL = NSURL(string: itemUrl) {
-                                    if let type = item["type"].string {
-                                        if let filename = itemNSURL.lastPathComponent {
-                                            let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
-                                            let slideshowItem = SlideshowItem(url: itemNSURL, type: type, path: cachePath)
-                                            do {
-                                                let fileAttributes = try NSFileManager.defaultManager().attributesOfItemAtPath(NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!)
-                                                let fileSize = fileAttributes[NSFileSize]
-                                                for cachedItem in cachedItems! {
-                                                    if(itemUrl == cachedItem["url"].stringValue) {
-                                                        if(item["md5sum"] == cachedItem["md5sum"] && item["filesize"].stringValue == fileSize?.stringValue) {
-                                                            slideshowItem.status = 1
+                    if let items = json["items"].array {
+                        let cachedItems = cachedJSON["items"].array
+                        if(items.count > 0) {
+                            self.slideshowLoader.removeAll()
+                            for item in items {
+                                if let itemUrl = item["url"].string {
+                                    if let itemNSURL = NSURL(string: itemUrl) {
+                                        if let type = item["type"].string {
+                                            if let filename = itemNSURL.lastPathComponent {
+                                                let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
+                                                let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
+                                                do {
+                                                    let fileAttributes : NSDictionary? = try FileManager.default.attributesOfItem(atPath: NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!) as NSDictionary?
+                                                    if let fileSizeNumber = fileAttributes?.fileSize() {
+                                                        let fileSize = fileSizeNumber
+                                                        for cachedItem in cachedItems! {
+                                                            if(itemUrl == cachedItem["url"].stringValue) {
+                                                                if let itemSize = UInt64(item["filesize"].stringValue, radix: 10) {
+                                                                    if(item["md5sum"] == cachedItem["md5sum"] && itemSize == fileSize) {
+                                                                        slideshowItem.status = 1
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
+                                                catch {
+                                                }
+                                                self.slideshowLoader.append(slideshowItem)
                                             }
-                                            catch {
+                                            else {
+                                                NSLog("Could not retrieve filename from url: %@", itemUrl)
                                             }
-                                            self.slideshowLoader.append(slideshowItem)
                                         }
                                         else {
-                                            NSLog("Could not retrieve filename from url: %@", itemUrl)
+                                            continue
                                         }
                                     }
                                     else {
@@ -482,35 +494,32 @@ class ViewController: NSViewController {
                                     continue
                                 }
                             }
-                            else {
-                                continue
+                            self.downloadItems()
+                        }
+                        else {
+                            let alert = NSAlert()
+                            alert.messageText = "Couldn't load any items."
+                            if let dataString = String(data: dumpData, encoding: String.Encoding.utf8) {
+                                alert.informativeText = dataString
                             }
+                            alert.addButton(withTitle: "OK")
+                            let _ = alert.runModal()
                         }
-                        self.downloadItems()
-                    }
-                    else {
-                        let alert = NSAlert()
-                        alert.messageText = "Couldn't load any items."
-                        if let dataString = String(data: dumpData!, encoding: NSUTF8StringEncoding) {
-                            alert.informativeText = dataString
-                        }
-                        alert.addButtonWithTitle("OK")
-                        let _ = alert.runModal()
                     }
                 }
                 else {
                     let alert = NSAlert()
                     alert.messageText = "Couldn't process data."
-                    alert.addButtonWithTitle("OK")
+                    alert.addButton(withTitle: "OK")
                     let _ = alert.runModal()
                 }
             }
             else {
                 if(self.initializing) {
-                    if let cachedData = NSData(contentsOfFile: String(jsonLocation)) {
-                        let json = JSON(data: cachedData)
+                    if let cachedData = NSData(contentsOfFile: String(describing: jsonLocation)) {
+                        let json = JSON(data: cachedData as Data)
                         if let countdowns = json["countdowns"].array {
-                            self.generateCountdowns(countdowns)
+                            self.generateCountdowns(countdowns: countdowns)
                         }
                         if let items = json["items"].array {
                             if(items.count > 0) {
@@ -521,7 +530,7 @@ class ViewController: NSViewController {
                                                 if let filename = itemNSURL.lastPathComponent {
                                                     let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
                                                     if(cachePath.exists) {
-                                                        let slideshowItem = SlideshowItem(url: itemNSURL, type: type, path: cachePath)
+                                                        let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
                                                         slideshowItem.status = 1
                                                         self.slideshowLoader.append(slideshowItem)
                                                     }
@@ -549,7 +558,7 @@ class ViewController: NSViewController {
                     else {
                         let alert = NSAlert()
                         alert.messageText = "Couldn't load data."
-                        alert.addButtonWithTitle("OK")
+                        alert.addButton(withTitle: "OK")
                         let _ = alert.runModal()
                     }
                 }
@@ -565,23 +574,23 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.window?.acceptsMouseMovedEvents = true
-        self.countdown.hidden = true
+        self.countdown.isHidden = true
         self.countdown.alphaValue = 0.7
     }
     
     override func viewDidAppear() {
         super.viewDidAppear()
-        if let urlString = NSUserDefaults.standardUserDefaults().stringForKey("url") {
-            self.loadSignage(urlString)
+        if let urlString = UserDefaults.standard.string(forKey: "url") {
+            self.loadSignage(urlString: urlString)
         }
-        if(self.addressBox.isDescendantOf(self.view)) {
-            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+        if(self.addressBox.isDescendant(of: self.view)) {
+            DispatchQueue.main.async(execute: { () -> Void in
                 self.addressBox.becomeFirstResponder()
             })
         }
     }
 
-    override var representedObject: AnyObject? {
+    override var representedObject: Any? {
         didSet {
         // Update the view, if already loaded.
         }

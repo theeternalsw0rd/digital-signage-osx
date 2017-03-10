@@ -12,14 +12,14 @@ import Foundation
 import AppKit
 import FileKit
 
-class SlideshowItem: NSOperation {
-    var url = NSURL()
+class SlideshowItem: Operation {
+    var url = URL(fileURLWithPath: "")
     var type = "image"
     var image = NSImage()
     var path: Path
     var status = 0
     
-    init(url: NSURL, type: String, path: Path) {
+    init(url: URL, type: String, path: Path) {
         self.url = url
         self.type = type
         self.path = path
