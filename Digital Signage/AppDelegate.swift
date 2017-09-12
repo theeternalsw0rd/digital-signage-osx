@@ -64,7 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             let properties = try self.applicationDocumentsDirectory.resourceValues(forKeys: [URLResourceKey.isDirectoryKey])
             if !(properties[URLResourceKey.isDirectoryKey]! as AnyObject).boolValue {
-                failureReason = "Expected a folder to store application data, found a file \(self.applicationDocumentsDirectory.path)."
+                failureReason = "Expected a folder to store application data, found a file \(String(describing: self.applicationDocumentsDirectory.path))."
                 shouldFail = true
             }
         } catch  {
