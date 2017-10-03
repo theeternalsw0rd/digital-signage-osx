@@ -72,7 +72,6 @@ class ViewController: NSViewController {
     }
     
     private func loadSignage(urlString: String) {
-        self.setUpdateTimer()
         if(!Path(stringInterpolation: self.applicationSupport).exists) {
             do {
                 try Path(stringInterpolation: self.applicationSupport).createDirectory()
@@ -85,10 +84,29 @@ class ViewController: NSViewController {
                 return
             }
         }
-        if let _url = NSURL(string: urlString) {
-            self.url = _url
-            getJSON()
-            self.setCountdowns()
+        if let _url = URLComponents(string: urlString) {
+            var url = _url
+            url.scheme = "https"
+            if let urlString = url.url?.absoluteString {
+                if let _surl = NSURL(string: urlString) {
+                    self.url = _surl
+                    getJSON()
+                    self.setCountdowns()
+                    self.setUpdateTimer()
+                }
+                else {
+                    let alert = NSAlert()
+                    alert.messageText = "URL appears to be malformed."
+                    alert.addButton(withTitle: "OK")
+                    let _ = alert.runModal()
+                }
+            }
+            else {
+                let alert = NSAlert()
+                alert.messageText = "URL appears to be malformed."
+                alert.addButton(withTitle: "OK")
+                let _ = alert.runModal()
+            }
         }
         else {
             let alert = NSAlert()
@@ -128,21 +146,21 @@ class ViewController: NSViewController {
     }
     
     private func createImageView(image: NSImage, thumbnail: Bool, frameSize: NSSize, boundsSize: NSSize) {
-        let imageView = MyImageView()
-        imageView.removeConstraints(imageView.constraints)
-        imageView.translatesAutoresizingMaskIntoConstraints = true
-        imageView.alphaValue = 0
-        if(thumbnail) {
-            imageView.image = image
-        }
-        else {
-            imageView.imageWithSize(image: image, w: frameSize.width, h: frameSize.height)
-        }
-        imageView.frame.size = frameSize
-        imageView.bounds.size = boundsSize
-        imageView.wantsLayer = true
-        imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
         DispatchQueue.main.async(execute: { () -> Void in
+            let imageView = MyImageView()
+            imageView.removeConstraints(imageView.constraints)
+            imageView.translatesAutoresizingMaskIntoConstraints = true
+            imageView.alphaValue = 0
+            if(thumbnail) {
+                imageView.image = image
+            }
+            else {
+                imageView.imageWithSize(image: image, w: frameSize.width, h: frameSize.height)
+            }
+            imageView.frame.size = frameSize
+            imageView.bounds.size = boundsSize
+            imageView.wantsLayer = true
+            imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
             self.view.addSubview(imageView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
             self.animating = true
             NSAnimationContext.runAnimationGroup(
@@ -168,7 +186,7 @@ class ViewController: NSViewController {
     }
     
     private func showNextSlide() {
-        DispatchQueue.global(qos: .background).async(execute: { () -> Void in
+        DispatchQueue.main.async(execute: { () -> Void in
             self.currentSlideIndex += 1
             if(self.currentSlideIndex == self.slideshowLength) {
                 if(self.updateReady) {
