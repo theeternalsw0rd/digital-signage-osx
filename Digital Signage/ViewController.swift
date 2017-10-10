@@ -13,6 +13,7 @@ import FileKit
 import AVKit
 import AVFoundation
 import SwiftyJSON
+import CoreGraphics
 
 class ViewController: NSViewController {
     private var url = NSURL(fileURLWithPath: "")
@@ -315,6 +316,17 @@ class ViewController: NSViewController {
                 self.addressBox.isHidden = true
                 self.label.isHidden = true
                 self.view.becomeFirstResponder()
+                // move cursor works around mac mini 10.13 bug
+                var cursorPoint = CGPoint(x: 500, y: 500)
+                if let screen = NSScreen.main() {
+                    // work around cursor sometimes getting stuck in visible state
+                    cursorPoint = CGPoint(x: screen.frame.width, y: screen.frame.height)
+                }
+                CGWarpMouseCursorPosition(cursorPoint)
+                if(!(self.view.window?.styleMask)!.contains(NSWindowStyleMask.fullScreen)) {
+                    self.view.window?.toggleFullScreen(nil)
+                }
+                /* should use this but breaks things on mac minis 10.13 and higher
                 if(!(self.view.isInFullScreenMode)) {
                     let presOptions: NSApplicationPresentationOptions =
                         [NSApplicationPresentationOptions.hideDock, NSApplicationPresentationOptions.hideMenuBar, NSApplicationPresentationOptions.disableAppleMenu]
@@ -322,6 +334,7 @@ class ViewController: NSViewController {
                         presOptions]
                     self.view.enterFullScreenMode(NSScreen.main()!, withOptions:optionsDictionary)
                 }
+                */
                 let view = self.view as! MyView
                 view.trackMouse = true
                 view.hideCursor()

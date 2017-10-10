@@ -18,9 +18,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let baseController = NSApplication.shared().mainWindow?.contentViewController as! ViewController
         baseController.resetView()
     }
+    
+    func applicationDidChangeScreenParameters(_ notification: Notification) {
+    }
 
     func applicationDidFinishLaunching(aNotification: NSNotification) {
-        // Insert code here to initialize your application
     }
 
     func applicationWillTerminate(aNotification: NSNotification) {
