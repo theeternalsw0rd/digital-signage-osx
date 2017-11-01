@@ -18,6 +18,7 @@ class SlideshowItem: Operation {
     var image = NSImage()
     var path: Path
     var status = 0
+    var duration = 7
     
     init(url: URL, type: String, path: Path) {
         self.url = url

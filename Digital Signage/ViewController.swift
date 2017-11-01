@@ -92,7 +92,7 @@ class ViewController: NSViewController {
             if let urlString = url.url?.absoluteString {
                 if let _surl = NSURL(string: urlString) {
                     self.url = _surl
-                    getJSON()
+                    self.getJSON()
                     self.setCountdowns()
                     self.setUpdateTimer()
                 }
@@ -284,7 +284,12 @@ class ViewController: NSViewController {
     
     private func setTimer() {
         DispatchQueue.main.async(execute: {
-            self.timer = Timer(timeInterval: 15.0, target: self, selector: #selector(self.backgroundUpdate), userInfo: nil, repeats: false)
+            var duration: Double = 7.0
+            if(self.slideshow.count > 0) {
+                let item = self.slideshow[self.currentSlideIndex]
+                duration = Double(item.duration)
+            }
+            self.timer = Timer(timeInterval: duration, target: self, selector: #selector(self.backgroundUpdate), userInfo: nil, repeats: false)
             RunLoop.current.add(self.timer, forMode: RunLoopMode.commonModes)
         })
     }
@@ -517,6 +522,11 @@ class ViewController: NSViewController {
                                                     if let filename = itemNSURL.lastPathComponent {
                                                         let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
                                                         let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
+                                                        if(type == "image") {
+                                                            if let duration = item["duration"].int {
+                                                                slideshowItem.duration = duration
+                                                            }
+                                                        }
                                                         do {
                                                             let fileAttributes : NSDictionary? = try FileManager.default.attributesOfItem(atPath: NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!) as NSDictionary?
                                                             if let fileSizeNumber = fileAttributes?.fileSize() {
