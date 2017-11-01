@@ -8,7 +8,8 @@ simple by receiving a JSON response from a server with the following structure:
 			"type": "image",
 			"url": "https://example.com/resource.jpg",
 			"md5sum": "1fda9e22f90b977119627c508567b74e",
-			"filesize": 1290906
+			"filesize": 1290906,
+			"duration": 7
 		},
 		{
 			"type": "video",
@@ -42,6 +43,8 @@ Countdowns that overlap days have not been tested.
 This application can handle jpeg and png images and any video format supported
 by Apple's AV Foundation. This application does not support subtitles or captions
 in the videos.
+
+Images can take a duration if you want different times for different images.
 
 This project makes use of the following Cocoapods:
 
