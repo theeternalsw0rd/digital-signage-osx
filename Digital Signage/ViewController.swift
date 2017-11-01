@@ -31,6 +31,7 @@ class ViewController: NSViewController {
     private var applicationSupport = Path.userApplicationSupport + "/theeternalsw0rd/Digital Signage"
     private let appDelegate = NSApplication.shared().delegate as! AppDelegate
     private let downloadQueue = OperationQueue()
+    private static var playerItemContext = 0
     
     @IBOutlet weak var countdown: NSTextField!
     @IBOutlet weak var goButton: NSButton!
@@ -131,19 +132,23 @@ class ViewController: NSViewController {
     }
     
     private func playVideo(frameSize: NSSize, boundsSize: NSSize, uri: NSURL) {
-        let videoView = NSView()
-        videoView.frame.size = frameSize
-        videoView.bounds.size = boundsSize
-        videoView.wantsLayer = true
-        videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
-        let player = AVPlayer(url: uri as URL)
-        let playerLayer = AVPlayerLayer(player: player)
-        playerLayer.videoGravity = AVLayerVideoGravityResize
-        videoView.layer = playerLayer
-        videoView.layer?.backgroundColor = CGColor(red: 0, green: 0, blue: 0, alpha: 0)
-        self.view.addSubview(videoView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
-        NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
-        player.play()
+        DispatchQueue.main.async(execute: { () -> Void in
+            let videoView = NSView()
+            videoView.frame.size = frameSize
+            videoView.bounds.size = boundsSize
+            videoView.wantsLayer = true
+            videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
+            let player = AVPlayer(url: uri as URL)
+            let playerLayer = AVPlayerLayer(player: player)
+            playerLayer.videoGravity = AVLayerVideoGravityResize
+            videoView.layer = playerLayer
+            videoView.layer?.backgroundColor = CGColor(red: 0, green: 0, blue: 0, alpha: 0)
+            self.view.addSubview(videoView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
+            NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
+            NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemFailedToPlayToEndTime, object: player.currentItem)
+            player.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.status), options: [.old, .new], context: &ViewController.playerItemContext)
+            player.play()
+        })
     }
     
     private func createImageView(image: NSImage, thumbnail: Bool, frameSize: NSSize, boundsSize: NSSize) {
@@ -196,6 +201,16 @@ class ViewController: NSViewController {
                     return
                 }
                 self.currentSlideIndex = 0
+            }
+            if(self.slideshow.count == 0) {
+                if(self.updateReady) {
+                    self.updateSlideshow()
+                    self.updateReady = false
+                    return
+                }
+                NSLog("Slideshow is empty at a point when it shouldn't be. Check server json response for properly configured data.")
+                self.setTimer()
+                return
             }
             let item = self.slideshow[self.currentSlideIndex]
             let type = item.type
@@ -645,6 +660,35 @@ class ViewController: NSViewController {
             DispatchQueue.main.async(execute: { () -> Void in
                 self.addressBox.becomeFirstResponder()
             })
+        }
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if(context == &ViewController.playerItemContext) {
+            if keyPath == #keyPath(AVPlayerItem.status) {
+                let status: AVPlayerItemStatus
+                if let statusNumber = change?[.newKey] as? NSNumber {
+                    status = AVPlayerItemStatus(rawValue: statusNumber.intValue)!
+                } else {
+                    status = .unknown
+                }
+                switch status {
+                    case .readyToPlay:
+                        break
+                    case .failed:
+                        (object as! AVPlayerItem?)?.removeObserver(self, forKeyPath: #keyPath(AVPlayerItem.status), context: &ViewController.playerItemContext)
+                        self.showNextSlide()
+                        break
+                    case .unknown:
+                        (object as! AVPlayerItem?)?.removeObserver(self, forKeyPath: #keyPath(AVPlayerItem.status), context: &ViewController.playerItemContext)
+                        self.showNextSlide()
+                        break
+                }
+            }
+        }
+        else {
+            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+            return
         }
     }
 
