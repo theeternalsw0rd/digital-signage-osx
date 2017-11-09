@@ -3,5 +3,4 @@ target 'Digital Signage' do
   use_frameworks!
   pod 'FileKit'
   pod 'Alamofire'
-  pod 'SwiftyJSON', :git => 'https://github.com/SwiftyJSON/SwiftyJSON.git'
 end

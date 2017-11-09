@@ -12,8 +12,27 @@ import Cocoa
 import FileKit
 import AVKit
 import AVFoundation
-import SwiftyJSON
 import CoreGraphics
+
+struct jsonObject: Decodable {
+    let countdowns: [jsonCountdown]?
+    let items: [jsonSlideshowItem]
+}
+
+struct jsonCountdown: Decodable {
+    let day: Int
+    let hour: Int
+    let minute: Int
+    let duration: Int
+}
+
+struct jsonSlideshowItem: Decodable {
+    let type: String
+    let url: String
+    let md5sum: String
+    let filesize: Int
+    let duration: Int?
+}
 
 class ViewController: NSViewController {
     private var url = NSURL(fileURLWithPath: "")
@@ -456,13 +475,15 @@ class ViewController: NSViewController {
         self.getJSON()
     }
     
-    private func generateCountdowns(countdowns: [JSON]) {
+    private func generateCountdowns(countdowns: [jsonCountdown]?) {
         self.countdowns = []
+        guard let countdowns = countdowns
+        else { return }
         for countdown in countdowns {
-            let day = countdown["day"].stringValue
-            let hour = countdown["hour"].stringValue
-            let minute = countdown["minute"].stringValue
-            let duration = countdown["duration"].stringValue
+            let day = countdown.day
+            let hour = countdown.hour
+            let minute = countdown.minute
+            let duration = countdown.duration
             let newCountdown = Countdown(day: day, hour: hour, minute: minute, duration: duration)
             self.countdowns.append(newCountdown)
         }
@@ -479,15 +500,15 @@ class ViewController: NSViewController {
         let request = NSMutableURLRequest(url: self.url as URL)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         let session = URLSession.shared
-        let task = session.dataTask(with: request as URLRequest) { (data, response, error) -> Void in
+        let _ = session.dataTask(with: request as URLRequest) { (data, response, error) -> Void in
             if error == nil {
                 if let dumpData = data {
                     let dumpNSData = NSData(data: dumpData)
                     do {
-                        var cachedJSON = try JSON(data: dumpData)
+                        var cachedJSON = try JSONDecoder().decode(jsonObject.self, from: dumpData)
                         if let cachedData = NSData(contentsOfFile: String(describing: jsonLocation)) {
                             do {
-                                let localCachedJSON = try JSON(data: cachedData as Data)
+                                let localCachedJSON = try JSONDecoder().decode(jsonObject.self, from: cachedData as Data)
                                 cachedJSON = localCachedJSON
                                 if(dumpNSData.isEqual(to: cachedData) && !self.initializing) {
                                     self.setUpdateTimer()
@@ -497,8 +518,8 @@ class ViewController: NSViewController {
                                 if (!(dumpNSData.write(toFile: jsonLocation.rawValue, atomically: true))) {
                                     NSLog("Unable to write to file %@", jsonLocation.rawValue)
                                 }
-                            } catch {
-                                NSLog("Could not parse json from data.")
+                            } catch let jsonErr {
+                                NSLog("Catch 1: Could not parse json from data. " + jsonErr.localizedDescription)
                             }
                         }
                         else {
@@ -507,79 +528,57 @@ class ViewController: NSViewController {
                             }
                         }
                         do {
-                            let json = try JSON(data: dumpData)
-                            if let countdowns = json["countdowns"].array {
-                                self.generateCountdowns(countdowns: countdowns)
-                            }
-                            if let items = json["items"].array {
-                                let cachedItems = cachedJSON["items"].array
-                                if(items.count > 0) {
-                                    self.slideshowLoader.removeAll()
-                                    for item in items {
-                                        if let itemUrl = item["url"].string {
-                                            if let itemNSURL = NSURL(string: itemUrl) {
-                                                if let type = item["type"].string {
-                                                    if let filename = itemNSURL.lastPathComponent {
-                                                        let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
-                                                        let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
-                                                        if(type == "image") {
-                                                            if let duration = item["duration"].int {
-                                                                slideshowItem.duration = duration
-                                                            }
-                                                        }
-                                                        do {
-                                                            let fileAttributes : NSDictionary? = try FileManager.default.attributesOfItem(atPath: NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!) as NSDictionary?
-                                                            if let fileSizeNumber = fileAttributes?.fileSize() {
-                                                                let fileSize = fileSizeNumber
-                                                                for cachedItem in cachedItems! {
-                                                                    if(itemUrl == cachedItem["url"].stringValue) {
-                                                                        if let itemSize = UInt64(item["filesize"].stringValue, radix: 10) {
-                                                                            if(item["md5sum"] == cachedItem["md5sum"] && itemSize == fileSize) {
-                                                                                slideshowItem.status = 1
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        catch {
-                                                        }
-                                                        self.slideshowLoader.append(slideshowItem)
-                                                    }
-                                                    else {
-                                                        NSLog("Could not retrieve filename from url: %@", itemUrl)
-                                                    }
-                                                }
-                                                else {
-                                                    continue
+                            let json = try JSONDecoder().decode(jsonObject.self, from: dumpData)
+                            self.generateCountdowns(countdowns: json.countdowns)
+                            let items = json.items
+                            let cachedItems = cachedJSON.items
+                            if(items.count > 0) {
+                                self.slideshowLoader.removeAll()
+                                for item in items {
+                                    let itemUrl = item.url
+                                    if let itemNSURL = NSURL(string: itemUrl) {
+                                        let type = item.type
+                                        if let filename = itemNSURL.lastPathComponent {
+                                            let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
+                                            let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
+                                            if(type == "image") {
+                                                if let duration = item.duration {
+                                                    slideshowItem.duration = duration
                                                 }
                                             }
-                                            else {
-                                                continue
+                                            do {
+                                                let fileAttributes : NSDictionary? = try FileManager.default.attributesOfItem(atPath: NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!) as NSDictionary?
+                                                if let fileSizeNumber = fileAttributes?.fileSize() {
+                                                    let fileSize = fileSizeNumber
+                                                    for cachedItem in cachedItems {
+                                                        if(itemUrl == cachedItem.url) {
+                                                            if(item.md5sum == cachedItem.md5sum && item.filesize == fileSize) {
+                                                                slideshowItem.status = 1
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
+                                            catch {
+                                            }
+                                            self.slideshowLoader.append(slideshowItem)
                                         }
                                         else {
-                                            continue
+                                            NSLog("Could not retrieve filename from url: %@", itemUrl)
                                         }
                                     }
-                                    self.downloadItems()
-                                }
-                                else {
-                                    let alert = NSAlert()
-                                    alert.messageText = "Couldn't load any items."
-                                    if let dataString = String(data: dumpData, encoding: String.Encoding.utf8) {
-                                        alert.informativeText = dataString
+                                    else {
+                                        continue
                                     }
-                                    alert.addButton(withTitle: "OK")
-                                    let _ = alert.runModal()
                                 }
+                                self.downloadItems()
                             }
-                        } catch {
-                            NSLog("Could not parse json from data")
+                        } catch let jsonErr {
+                            NSLog("Catch 3: Could not parse json from data. " + jsonErr.localizedDescription)
                             return
                         }
-                    } catch {
-                        NSLog("Could not parse json from data.")
+                    } catch let jsonErr {
+                        NSLog("Catch 2: Could not parse json from data. " + jsonErr.localizedDescription)
                         return
                     }
                 }
@@ -594,46 +593,35 @@ class ViewController: NSViewController {
                 if(self.initializing) {
                     if let cachedData = NSData(contentsOfFile: String(describing: jsonLocation)) {
                         do {
-                            let json = try JSON(data: cachedData as Data)
-                            if let countdowns = json["countdowns"].array {
-                                self.generateCountdowns(countdowns: countdowns)
-                            }
-                            if let items = json["items"].array {
-                                if(items.count > 0) {
-                                    for item in items {
-                                        if let itemUrl = item["url"].string {
-                                            if let itemNSURL = NSURL(string: itemUrl) {
-                                                if let type = item["type"].string {
-                                                    if let filename = itemNSURL.lastPathComponent {
-                                                        let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
-                                                        if(cachePath.exists) {
-                                                            let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
-                                                            slideshowItem.status = 1
-                                                            self.slideshowLoader.append(slideshowItem)
-                                                        }
-                                                    }
-                                                    else {
-                                                        NSLog("Could not retrieve filename from url: %@", itemUrl)
-                                                    }
-                                                }
-                                                else {
-                                                    continue
-                                                }
-                                            }
-                                            else {
-                                                continue
+                            let json = try JSONDecoder().decode(jsonObject.self, from: cachedData as Data)
+                            self.generateCountdowns(countdowns: json.countdowns)
+                            let items = json.items
+                            if(items.count > 0) {
+                                for item in items {
+                                    let itemUrl = item.url
+                                    if let itemNSURL = NSURL(string: itemUrl) {
+                                        let type = item.type
+                                        if let filename = itemNSURL.lastPathComponent {
+                                            let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
+                                            if(cachePath.exists) {
+                                                let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
+                                                slideshowItem.status = 1
+                                                self.slideshowLoader.append(slideshowItem)
                                             }
                                         }
                                         else {
-                                            continue
+                                            NSLog("Could not retrieve filename from url: %@", itemUrl)
                                         }
                                     }
-                                    self.downloadItems()
+                                    else {
+                                        continue
+                                    }
                                 }
+                                self.downloadItems()
                             }
-                        } catch {
+                        } catch let jsonErr {
                             let alert = NSAlert()
-                            alert.messageText = "Couldn't load data."
+                            alert.messageText = "Could not parse json from data. " + jsonErr.localizedDescription
                             alert.addButton(withTitle: "OK")
                             let _ = alert.runModal()
                         }
@@ -650,8 +638,7 @@ class ViewController: NSViewController {
                     self.setUpdateTimer()
                 }
             }
-        }
-        task.resume()
+        }.resume()
     }
     
     override func viewDidLoad() {
