@@ -10,7 +10,6 @@
 
 import Foundation
 import AppKit
-import Alamofire
 
 class Downloader: Operation {
     let item: SlideshowItem
@@ -21,20 +20,39 @@ class Downloader: Operation {
     }
     
     override func main() {
-        let destination: DownloadRequest.DownloadFileDestination = { _, _ in
-            let destinationURL = URL(fileURLWithPath: self.item.path, isDirectory: false)
-            return (destinationURL, [.removePreviousFile, .createIntermediateDirectories])
-        }
-        Alamofire.download(self.item.url, to: destination)
-        .response { response in
-            if let error = response.error {
-                NSLog("Failed with error: %@", error.localizedDescription)
+        let _ = URLSession.shared.downloadTask(with: self.item.url, completionHandler: { tempFile, response, error in
+            guard let tempFile = tempFile else {
+                NSLog("Problem downloading item due to undocumented system error.")
                 self.item.status = -1
-            } else {
-                self.item.status = 1
-                NSLog("Downloaded %@", self.item.path)
+                return
             }
-        }
+            if let error = error {
+                NSLog("Failed with error: " + error.localizedDescription)
+                self.item.status = -1
+                return
+            }
+            else {
+                let fileManager = FileManager.default
+                if(fileManager.fileExists(atPath: self.item.path)) {
+                    do {
+                        try fileManager.removeItem(atPath: self.item.path)
+                    } catch let fileErr {
+                        self.item.status = -1
+                        NSLog("Failed to delete existing file. " + fileErr.localizedDescription)
+                        return
+                    }
+                }
+                do {
+                    try fileManager.moveItem(atPath: tempFile.path, toPath: self.item.path)
+                } catch let fileErr {
+                    self.item.status = -1
+                    NSLog("Failed to write item to disk " + self.item.path + " with error: " + fileErr.localizedDescription)
+                    return
+                }
+                self.item.status = 1
+                NSLog("Item written to disk at " + self.item.path)
+            }
+        }).resume()
         while(self.item.status == 0) {
             usleep(100000)
         }
