@@ -45,13 +45,3 @@ by Apple's AV Foundation. This application does not support subtitles or caption
 in the videos.
 
 Images can take a duration if you want different times for different images.
-
-This project makes use of the following Cocoapods:
-
-```
-pod 'FileKit', '~> 2.0.0'
-pod 'Alamofire', '~> 3.0'
-pod 'SwiftyJSON', :git => 'https://github.com/SwiftyJSON/SwiftyJSON.git'
-```
-
-So as with any project using Cocoapods, you should use the xcworkspace instead of the xcodeproj.

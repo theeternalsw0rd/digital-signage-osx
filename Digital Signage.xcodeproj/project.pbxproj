@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5408F133DDDB7B13B2DEAFA9 /* Pods_Digital_Signage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DC8536B17D847479D348182 /* Pods_Digital_Signage.framework */; };
 		6E5C28E51C3ECFAC0019974B /* Countdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5C28E41C3ECFAC0019974B /* Countdown.swift */; };
 		6E64E9B71C29F06400E6E5C8 /* Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E64E9B61C29F06400E6E5C8 /* Downloader.swift */; };
 		6EE9B9B01C23170D0072B6ED /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE9B9AF1C23170D0072B6ED /* AppDelegate.swift */; };
@@ -21,8 +20,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2DC8536B17D847479D348182 /* Pods_Digital_Signage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Digital_Signage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		360EC5F8E698A566BF6C5337 /* Pods.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E5C28E41C3ECFAC0019974B /* Countdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Countdown.swift; sourceTree = "<group>"; };
 		6E64E9B61C29F06400E6E5C8 /* Downloader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Downloader.swift; sourceTree = "<group>"; };
 		6EE9B9AC1C23170D0072B6ED /* Digital Signage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Digital Signage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -35,8 +32,6 @@
 		6EE9B9C51C235BED0072B6ED /* SlideshowItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SlideshowItem.swift; sourceTree = "<group>"; };
 		6EF8FDC91C309827001B684D /* MyView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyView.swift; sourceTree = "<group>"; };
 		6EF8FDCB1C309B7F001B684D /* MyImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyImageView.swift; sourceTree = "<group>"; };
-		9CC50BA326121E1530C3C205 /* Pods-Digital Signage.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Digital Signage.release.xcconfig"; path = "Pods/Target Support Files/Pods-Digital Signage/Pods-Digital Signage.release.xcconfig"; sourceTree = "<group>"; };
-		CC80819CC08F21C73C73054B /* Pods-Digital Signage.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Digital Signage.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Digital Signage/Pods-Digital Signage.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,38 +39,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5408F133DDDB7B13B2DEAFA9 /* Pods_Digital_Signage.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		165EE6F1406A74551250A635 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				360EC5F8E698A566BF6C5337 /* Pods.framework */,
-				2DC8536B17D847479D348182 /* Pods_Digital_Signage.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		255D31E4B0BA33FC969111EC /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				CC80819CC08F21C73C73054B /* Pods-Digital Signage.debug.xcconfig */,
-				9CC50BA326121E1530C3C205 /* Pods-Digital Signage.release.xcconfig */,
-			);
-			name = Pods;
-			sourceTree = "<group>";
-		};
 		6EE9B9A31C23170D0072B6ED = {
 			isa = PBXGroup;
 			children = (
 				6EE9B9AE1C23170D0072B6ED /* Digital Signage */,
 				6EE9B9AD1C23170D0072B6ED /* Products */,
-				165EE6F1406A74551250A635 /* Frameworks */,
-				255D31E4B0BA33FC969111EC /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -112,12 +86,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6EE9B9BE1C23170D0072B6ED /* Build configuration list for PBXNativeTarget "Digital Signage" */;
 			buildPhases = (
-				EA85BE61F707ED936E783DF0 /* [CP] Check Pods Manifest.lock */,
 				6EE9B9A81C23170D0072B6ED /* Sources */,
 				6EE9B9A91C23170D0072B6ED /* Frameworks */,
 				6EE9B9AA1C23170D0072B6ED /* Resources */,
-				5907793DA1B6580FBF470644 /* [CP] Embed Pods Frameworks */,
-				CCFDB9F5D9062C7023AF6518 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -175,60 +146,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		5907793DA1B6580FBF470644 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-Digital Signage/Pods-Digital Signage-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Alamofire.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Digital Signage/Pods-Digital Signage-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		CCFDB9F5D9062C7023AF6518 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Digital Signage/Pods-Digital Signage-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		EA85BE61F707ED936E783DF0 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Digital Signage-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6EE9B9A81C23170D0072B6ED /* Sources */ = {
@@ -359,7 +276,6 @@
 		};
 		6EE9B9BF1C23170D0072B6ED /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CC80819CC08F21C73C73054B /* Pods-Digital Signage.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -383,7 +299,6 @@
 		};
 		6EE9B9C01C23170D0072B6ED /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9CC50BA326121E1530C3C205 /* Pods-Digital Signage.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
