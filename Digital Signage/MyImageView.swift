@@ -38,7 +38,7 @@ class MyImageView: NSImageView {
                 removeTrackingArea(trackingArea)
             }
         }
-        let options = NSTrackingAreaOptions.activeAlways.symmetricDifference(NSTrackingAreaOptions.mouseMoved)
+        let options = NSTrackingArea.Options.activeAlways.symmetricDifference(NSTrackingArea.Options.mouseMoved)
         let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
         self.addTrackingArea(trackingArea)
     }

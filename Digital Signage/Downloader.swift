@@ -10,7 +10,6 @@
 
 import Foundation
 import AppKit
-import FileKit
 import Alamofire
 
 class Downloader: Operation {

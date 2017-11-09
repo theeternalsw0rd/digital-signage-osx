@@ -29,7 +29,7 @@ class ViewController: NSViewController {
     private var initializing = true
     private var animating = false
     private var applicationSupport = Path.userApplicationSupport + "/theeternalsw0rd/Digital Signage"
-    private let appDelegate = NSApplication.shared().delegate as! AppDelegate
+    private let appDelegate = NSApplication.shared.delegate as! AppDelegate
     private let downloadQueue = OperationQueue()
     private static var playerItemContext = 0
     
@@ -118,7 +118,7 @@ class ViewController: NSViewController {
         }
     }
     
-    func backgroundUpdate(timer:Timer) {
+    @objc func backgroundUpdate(timer:Timer) {
         self.showNextSlide()
     }
     
@@ -137,13 +137,13 @@ class ViewController: NSViewController {
             videoView.frame.size = frameSize
             videoView.bounds.size = boundsSize
             videoView.wantsLayer = true
-            videoView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
+            videoView.layerContentsRedrawPolicy = NSView.LayerContentsRedrawPolicy.onSetNeedsDisplay
             let player = AVPlayer(url: uri as URL)
             let playerLayer = AVPlayerLayer(player: player)
-            playerLayer.videoGravity = AVLayerVideoGravityResize
+            playerLayer.videoGravity = AVLayerVideoGravity.resize
             videoView.layer = playerLayer
             videoView.layer?.backgroundColor = CGColor(red: 0, green: 0, blue: 0, alpha: 0)
-            self.view.addSubview(videoView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
+            self.view.addSubview(videoView, positioned: NSWindow.OrderingMode.below, relativeTo: self.countdown)
             NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
             NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: NSNotification.Name.AVPlayerItemFailedToPlayToEndTime, object: player.currentItem)
             player.currentItem?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.status), options: [.old, .new], context: &ViewController.playerItemContext)
@@ -166,8 +166,8 @@ class ViewController: NSViewController {
             imageView.frame.size = frameSize
             imageView.bounds.size = boundsSize
             imageView.wantsLayer = true
-            imageView.layerContentsRedrawPolicy = NSViewLayerContentsRedrawPolicy.onSetNeedsDisplay
-            self.view.addSubview(imageView, positioned: NSWindowOrderingMode.below, relativeTo: self.countdown)
+            imageView.layerContentsRedrawPolicy = NSView.LayerContentsRedrawPolicy.onSetNeedsDisplay
+            self.view.addSubview(imageView, positioned: NSWindow.OrderingMode.below, relativeTo: self.countdown)
             self.animating = true
             NSAnimationContext.runAnimationGroup(
                 { (context) -> Void in
@@ -243,7 +243,7 @@ class ViewController: NSViewController {
         })
     }
     
-    func playerDidFinishPlaying(note: NSNotification) {
+    @objc func playerDidFinishPlaying(note: NSNotification) {
         self.showNextSlide()
         NotificationCenter.default.removeObserver(self)
     }
@@ -338,12 +338,12 @@ class ViewController: NSViewController {
                 self.view.becomeFirstResponder()
                 // move cursor works around mac mini 10.13 bug
                 var cursorPoint = CGPoint(x: 500, y: 500)
-                if let screen = NSScreen.main() {
+                if let screen = NSScreen.main {
                     // work around cursor sometimes getting stuck in visible state
                     cursorPoint = CGPoint(x: screen.frame.width, y: screen.frame.height)
                 }
                 CGWarpMouseCursorPosition(cursorPoint)
-                if(!(self.view.window?.styleMask)!.contains(NSWindowStyleMask.fullScreen)) {
+                if(!(self.view.window?.styleMask)!.contains(NSWindow.StyleMask.fullScreen)) {
                     self.view.window?.toggleFullScreen(nil)
                 }
                 /* should use this but breaks things on mac minis 10.13 and higher
@@ -411,7 +411,7 @@ class ViewController: NSViewController {
         return weekDay
     }
     
-    func updateCountdowns() {
+    @objc func updateCountdowns() {
         let date = NSDate()
         let currentDay = getDayOfWeek(date: date)
         let calendar = NSCalendar.current
@@ -452,7 +452,7 @@ class ViewController: NSViewController {
         self.countdown.isHidden = hide
     }
     
-    func update() {
+    @objc func update() {
         self.getJSON()
     }
     

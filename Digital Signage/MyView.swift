@@ -20,7 +20,7 @@ class MyView: NSView {
         // Drawing code here.
     }
     
-    func hideCursor() {
+    @objc func hideCursor() {
         NSCursor.setHiddenUntilMouseMoves(true)
     }
     
