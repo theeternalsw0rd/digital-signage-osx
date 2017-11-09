@@ -9,7 +9,6 @@
 //  This file is subject to the terms and conditions defined in LICENSE.md
 
 import Cocoa
-import FileKit
 import AVKit
 import AVFoundation
 import CoreGraphics
@@ -47,7 +46,7 @@ class ViewController: NSViewController {
     private var updateReady = false
     private var initializing = true
     private var animating = false
-    private var applicationSupport = Path.userApplicationSupport + "/theeternalsw0rd/Digital Signage"
+    private var applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].path + "/theeternalsw0rd/Digital Signage"
     private let appDelegate = NSApplication.shared.delegate as! AppDelegate
     private let downloadQueue = OperationQueue()
     private static var playerItemContext = 0
@@ -93,13 +92,23 @@ class ViewController: NSViewController {
     }
     
     private func loadSignage(urlString: String) {
-        if(!Path(stringInterpolation: self.applicationSupport).exists) {
-            do {
-                try Path(stringInterpolation: self.applicationSupport).createDirectory()
-            }
-            catch {
+        var isDir : ObjCBool = ObjCBool(false)
+        if(FileManager.default.fileExists(atPath: self.applicationSupport, isDirectory: &isDir)) {
+            if(!isDir.boolValue) {
                 let alert = NSAlert()
-                alert.messageText = "Could not create caching directory."
+                alert.messageText = "File already exists at caching directory path."
+                alert.addButton(withTitle: "OK")
+                let _ = alert.runModal()
+                return
+            }
+        }
+        else {
+            do {
+                try FileManager.default.createDirectory(atPath: self.applicationSupport, withIntermediateDirectories: true, attributes: nil)
+            }
+            catch let writeErr {
+                let alert = NSAlert()
+                alert.messageText = "Could not create caching directory. " + writeErr.localizedDescription
                 alert.addButton(withTitle: "OK")
                 let _ = alert.runModal()
                 return
@@ -197,7 +206,7 @@ class ViewController: NSViewController {
                     self.releaseOtherViews(imageView: imageView)
                     if(thumbnail) {
                         let item = self.slideshow[self.currentSlideIndex]
-                        let path = item.path.rawValue
+                        let path = item.path
                         let uri = NSURL(fileURLWithPath: path)
                         self.playVideo(frameSize: frameSize, boundsSize: boundsSize, uri: uri)
                     }
@@ -233,7 +242,7 @@ class ViewController: NSViewController {
             }
             let item = self.slideshow[self.currentSlideIndex]
             let type = item.type
-            let path = item.path.rawValue
+            let path = item.path
             let frameSize = self.view.frame.size
             let boundsSize = self.view.bounds.size
             if(type == "image") {
@@ -323,15 +332,15 @@ class ViewController: NSViewController {
         }
         self.downloadQueue.isSuspended = true
         for item in self.slideshowLoader {
-            if(Path(stringInterpolation: item.path).exists) {
+            if(FileManager.default.fileExists(atPath: item.path)) {
                 if(item.status == 1) {
                     continue
                 }
                 let fileManager = FileManager.default
                 do {
-                    try fileManager.removeItem(atPath: item.path.rawValue)
+                    try fileManager.removeItem(atPath: item.path)
                 } catch {
-                    NSLog("Could not remove existing file: %@", item.path.rawValue)
+                    NSLog("Could not remove existing file: %@", item.path)
                     continue
                 }
                 let operation = Downloader(item: item)
@@ -395,26 +404,29 @@ class ViewController: NSViewController {
         self.appDelegate.backgroundThread(
             background: {
                 let items = self.slideshow
-                let files = self.applicationSupport.find(searchDepth: 1) {
-                    path in path.rawValue != self.applicationSupport.rawValue + "/json.txt"
-                }
-                for file in files {
-                    var remove = true
-                    for item in items {
-                        if(item.path.rawValue == file.rawValue) {
-                            remove = false
-                            break
+                do {
+                    let files = try FileManager.default.contentsOfDirectory(atPath: self.applicationSupport)
+                    for file in files {
+                        let filePath = self.applicationSupport + "/" + file
+                        var remove = true
+                        for item in items {
+                            if(file == "json.txt" || item.path == filePath) {
+                                remove = false
+                                break
+                            }
+                        }
+                        if(remove) {
+                            let fileManager = FileManager.default
+                            do {
+                                try fileManager.removeItem(atPath: filePath)
+                            } catch {
+                                NSLog("Could not remove existing file: %@", filePath)
+                                continue
+                            }
                         }
                     }
-                    if(remove) {
-                        let fileManager = FileManager.default
-                        do {
-                            try fileManager.removeItem(atPath: file.rawValue)
-                        } catch {
-                            NSLog("Could not remove existing file: %@", file.rawValue)
-                            continue
-                        }
-                    }
+                } catch let readErr {
+                    NSLog("Could not read files from caching directory. " + readErr.localizedDescription)
                 }
             }, completion: {
                 self.setUpdateTimer()
@@ -515,16 +527,16 @@ class ViewController: NSViewController {
                                     NSLog("No changes")
                                     return
                                 }
-                                if (!(dumpNSData.write(toFile: jsonLocation.rawValue, atomically: true))) {
-                                    NSLog("Unable to write to file %@", jsonLocation.rawValue)
+                                if (!(dumpNSData.write(toFile: jsonLocation, atomically: true))) {
+                                    NSLog("Unable to write to file %@", jsonLocation)
                                 }
                             } catch let jsonErr {
                                 NSLog("Catch 1: Could not parse json from data. " + jsonErr.localizedDescription)
                             }
                         }
                         else {
-                            if (!(dumpNSData.write(toFile: jsonLocation.rawValue, atomically: true))) {
-                                NSLog("Unable to write to file %@", jsonLocation.rawValue)
+                            if (!(dumpNSData.write(toFile: jsonLocation, atomically: true))) {
+                                NSLog("Unable to write to file %@", jsonLocation)
                             }
                         }
                         do {
@@ -539,7 +551,7 @@ class ViewController: NSViewController {
                                     if let itemNSURL = NSURL(string: itemUrl) {
                                         let type = item.type
                                         if let filename = itemNSURL.lastPathComponent {
-                                            let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
+                                            let cachePath = self.applicationSupport + "/" + filename
                                             let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
                                             if(type == "image") {
                                                 if let duration = item.duration {
@@ -547,7 +559,7 @@ class ViewController: NSViewController {
                                                 }
                                             }
                                             do {
-                                                let fileAttributes : NSDictionary? = try FileManager.default.attributesOfItem(atPath: NSURL(fileURLWithPath: cachePath.rawValue, isDirectory: false).path!) as NSDictionary?
+                                                let fileAttributes : NSDictionary? = try FileManager.default.attributesOfItem(atPath: NSURL(fileURLWithPath: cachePath, isDirectory: false).path!) as NSDictionary?
                                                 if let fileSizeNumber = fileAttributes?.fileSize() {
                                                     let fileSize = fileSizeNumber
                                                     for cachedItem in cachedItems {
@@ -602,8 +614,8 @@ class ViewController: NSViewController {
                                     if let itemNSURL = NSURL(string: itemUrl) {
                                         let type = item.type
                                         if let filename = itemNSURL.lastPathComponent {
-                                            let cachePath = Path(stringInterpolation: self.applicationSupport + "/" + filename)
-                                            if(cachePath.exists) {
+                                            let cachePath = self.applicationSupport + "/" + filename
+                                            if(FileManager.default.fileExists(atPath: cachePath)) {
                                                 let slideshowItem = SlideshowItem(url: itemNSURL as URL, type: type, path: cachePath)
                                                 slideshowItem.status = 1
                                                 self.slideshowLoader.append(slideshowItem)

@@ -22,7 +22,7 @@ class Downloader: Operation {
     
     override func main() {
         let destination: DownloadRequest.DownloadFileDestination = { _, _ in
-            let destinationURL = URL(fileURLWithPath: self.item.path.rawValue, isDirectory: false)
+            let destinationURL = URL(fileURLWithPath: self.item.path, isDirectory: false)
             return (destinationURL, [.removePreviousFile, .createIntermediateDirectories])
         }
         Alamofire.download(self.item.url, to: destination)
@@ -32,7 +32,7 @@ class Downloader: Operation {
                 self.item.status = -1
             } else {
                 self.item.status = 1
-                NSLog("Downloaded %@", self.item.path.rawValue)
+                NSLog("Downloaded %@", self.item.path)
             }
         }
         while(self.item.status == 0) {

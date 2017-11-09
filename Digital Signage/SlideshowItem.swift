@@ -10,17 +10,16 @@
 
 import Foundation
 import AppKit
-import FileKit
 
 class SlideshowItem: Operation {
     var url = URL(fileURLWithPath: "")
     var type = "image"
     var image = NSImage()
-    var path: Path
+    var path: String
     var status = 0
     var duration = 7
     
-    init(url: URL, type: String, path: Path) {
+    init(url: URL, type: String, path: String) {
         self.url = url
         self.type = type
         self.path = path
